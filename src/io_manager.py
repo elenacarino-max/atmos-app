@@ -1,6 +1,7 @@
 import os
 import json
 from typing import List, Dict, Any
+from logger import log_info, log_error, log_warning
 
 # Ruta al archivo json
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,14 +24,19 @@ def cargar_datos() -> List[Dict[str, Any]]:
         No lanza excepciones. Los errores de E/S y de decodificación de JSON 
         son capturados internamente para asegurar la estabilidad del sistema.
     """
+    log_info(f"Intentando cargar datos desde: {DATA_PATH}")
+
     if not os.path.exists(DATA_PATH):
         return []
 
     try:
         with open(DATA_PATH, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            datos = json.load(f)
+            log_info(f"Carga exitosa. Se han recuperado {len(datos)} registros.")
+            return datos
     except (json.JSONDecodeError, FileNotFoundError):
-        # Manejo de error si el archivo está dañado o no existe 
+        # Manejo de error si el archivo está dañado o no existe
+        log_error(f"Error al leer el archivo JSON (posible archivo corrupto): {e}")
         return []
 
 def guardar_registro(nuevo_registro: Dict[str, Any], datos: List[Dict[str, Any]]) -> bool:
@@ -50,10 +56,18 @@ def guardar_registro(nuevo_registro: Dict[str, Any], datos: List[Dict[str, Any]]
     datos.append(nuevo_registro)
 
     try:
+        # Asegurar que la carpeta contenedora exista
+        directorio = os.path.dirname(DATA_PATH)
+        if directorio and not os.path.exists(directorio):
+            os.makedirs(directorio)
+            log_info(f"Creado directorio inexistente: {directorio}")
+
         # Guardar manteniendo la estructura original 
         with open(DATA_PATH, 'w', encoding='utf-8') as f:
             json.dump(datos, f, indent=4, ensure_ascii=False)
+            log_info(f"Registro guardado correctamente para la zona '{nuevo_registro.get('zona_registro')}'")
         return True
     except Exception:
         # Gestión de errores de escritura
+        log_error(f"Fallo crítico al intentar persistir los datos: {e}")
         return False
