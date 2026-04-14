@@ -10,4 +10,12 @@ ENV/
 *$py.class
 
 # Logs
-logs/*.log
+logs/
+*.log
+
+# macOS
+.DS_Store
+
+# pytest
+.pytest_cache/
+

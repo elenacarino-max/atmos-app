@@ -1,0 +1,16 @@
+[
+    {
+        "fecha_registro": "2025-12-31",
+        "zona_registro": "centro",
+        "temperatura": -10.0,
+        "humedad_nivel": 20.0,
+        "viento_velocidad": 40.0,
+        "mensajes": [
+            "Alarma: Riesgo de temperatura",
+            "Alarma: Riesgo de humedad"
+        ],
+        "alerta_temperatura": true,
+        "alerta_viento": false,
+        "alerta_humedad": true
+    }
+]
