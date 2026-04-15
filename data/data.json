@@ -12,5 +12,32 @@
         "alerta_temperatura": true,
         "alerta_viento": false,
         "alerta_humedad": true
+    },
+    {
+        "fecha_registro": "2026-04-14",
+        "zona_registro": "sur",
+        "temperatura": 30.0,
+        "humedad_nivel": 30.0,
+        "viento_velocidad": 100.0,
+        "mensajes": [
+            "Alarma: Riesgo de viento alto"
+        ],
+        "alerta_temperatura": false,
+        "alerta_viento": true,
+        "alerta_humedad": false
+    },
+    {
+        "fecha_registro": "2026-04-11",
+        "zona_registro": "centro",
+        "temperatura": 42.0,
+        "humedad_nivel": 10.0,
+        "viento_velocidad": 10.0,
+        "mensajes": [
+            "Alarma: Riesgo de temperatura",
+            "Alarma: Riesgo de humedad"
+        ],
+        "alerta_temperatura": true,
+        "alerta_viento": false,
+        "alerta_humedad": true
     }
 ]
