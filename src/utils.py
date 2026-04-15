@@ -46,3 +46,36 @@ def normalizar_entrada(texto: str) -> str:
     if not texto:
         return ""
     return texto.strip().replace(",", ".")
+
+def formatear_texto(texto: str, color: str = "rojo", estilo: str = "negrita") -> str:
+    """
+    Aplica códigos de escape ANSI para dar formato de color y estilo al texto en la terminal.
+
+    Args:
+        texto (str): La cadena de texto que se quiere formatear.
+        color (str, opcional): El color de la fuente. 
+        estilo (str, opcional): El estilo de la fuente. 
+
+    Returns:
+        str: El texto original envuelto en los códigos ANSI de formato y reseteo.
+    """
+    RESET = "\033[0m"
+    
+    colores = {
+        "rojo": "\033[31m",
+        "amarillo": "\033[33m",
+        "verde": "\033[32m",
+        "azul": "\033[34m",
+        "blanco": ""
+    }
+
+    estilos = {
+        "negrita": "\033[1m",
+        "cursiva": "\033[3m",
+        "normal": ""
+    }
+    
+    codigo_color = colores.get(color, "")
+    codigo_estilo = estilos.get(estilo, "")
+    
+    return f"{codigo_estilo}{codigo_color}{texto}{RESET}"
