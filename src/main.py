@@ -7,6 +7,72 @@ from validation import validar_zona_registro, validar_duplicado
 from alerts import evaluar_alerta
 import io_manager as io
 from logger import configurar_logger, log_info, log_warning, log_error, log_critico
+from auth import registrar_usuario, login
+
+def mostrar_menu_inicio():
+    """
+    Menú inicial antes de entrar en la aplicación.
+    """
+    print("\n===== ATMOS-APP =====")
+    print("1. Registrarse")
+    print("2. Iniciar sesión")
+    print("3. Salir")
+
+
+def hacer_registro_usuario():
+    """
+    Pide los datos para registrar un usuario nuevo.
+    """
+    print("\n--- REGISTRO DE USUARIO ---")
+    usuario = input("Usuario: ")
+    email = input("Email: ")
+    contrasena = input("Contraseña: ")
+
+    correcto, mensaje = registrar_usuario(usuario, email, contrasena)
+    print(mensaje)
+
+
+def hacer_login_usuario():
+    """
+    Pide email y contraseña y comprueba si el login es correcto.
+    Devuelve True o False.
+    """
+    print("\n--- INICIO DE SESIÓN ---")
+    email = input("Email: ")
+    contrasena = input("Contraseña: ")
+
+    correcto, mensaje = login(email, contrasena)
+    print(mensaje)
+    return correcto
+
+
+def menu_acceso():
+    """
+    Bucle del menú de acceso.
+    Solo deja entrar en la app si el login es correcto.
+    """
+    while True:
+        limpiar_pantalla()
+        mostrar_menu_inicio()
+        opcion = input("Elige una opción: ")
+
+        if opcion == "1":
+            hacer_registro_usuario()
+            input("\nPulsa Enter para continuar...")
+
+        elif opcion == "2":
+            acceso = hacer_login_usuario()
+            if acceso:
+                return True
+            input("\nPulsa Enter para continuar...")
+
+        elif opcion == "3":
+            print("Saliendo del programa...")
+            return False
+
+        else:
+            print("Opción no válida.")
+            input("\nPulsa Enter para continuar...")
 
 def ejecutar_registro() -> None:
     """
@@ -169,20 +235,29 @@ def iniciar_aplicacion() -> None:
             input("\nPresione Enter para intentarlo de nuevo...")
 
 if __name__ == "__main__":
-    # Configurar el logger al arrancar
     configurar_logger()
     log_info("--- SESIÓN INICIADA: Sistema Atmos arrancado correctamente ---")
-    
+
     try:
         ui.transicion_bienvenida()
-        iniciar_aplicacion()
+
+        acceso_concedido = menu_acceso()
+
+        if acceso_concedido:
+            iniciar_aplicacion()
+        else:
+            ui.transicion_despedida()
+            sys.exit()
+
     except KeyboardInterrupt:
         log_info("Cierre forzado de la aplicación (Ctrl+C).")
         ui.transicion_despedida()
         sys.exit()
+
     except EOFError:
         pass
+
     except Exception as e:
         log_critico(f"ERROR CRÍTICO NO CONTROLADO: {str(e)}")
         print(f"\n❌ Error crítico inesperado: {e}")
->>>>>>> main
+
