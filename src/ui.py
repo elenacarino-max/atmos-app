@@ -127,9 +127,9 @@ def mostrar_menu_principal() -> str:
     """
     imprimir_encabezado_h1("ATMOS: GESTIÓN METEOROLÓGICA URBANA")
     print(" [1] Registrar nueva medición")
-    print(" [2] Consultar registro meteorológico por zona (En desarrollo)")
+    print(" [2] Consultar registro meteorológico por zona")
     print(" [3] Ver histórico")
-    print(" [4] Ver estadísticas (En desarrollo)")
+    print(" [4] Ver estadísticas")
     print(" [X] Salir")
     print("-" * 50)
     return input("Seleccione una opción: ").strip()
