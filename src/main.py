@@ -369,10 +369,7 @@ def estadisticas_por_zona() -> None:
                     fechas = [datetime.strptime(d['fecha_registro'], "%Y-%m-%d") for d in datos_zona]
                     temperaturas = [float(d.get('temperatura', 0)) for d in datos_zona]
                     humedad = [float(d.get('humedad_nivel', 0)) for d in datos_zona]
-                    viento = [float(d.get('viento_velocidad', 0)) for d in datos_zona]
-                    print(fechas)
-                    print(viento)
-                    
+                    viento = [float(d.get('viento_velocidad', 0)) for d in datos_zona]                  
 
                     print(f"\n EVOLUCIÓN TÉRMICA - ZONA "
                           f"{formatear_texto(zona_buscada.upper(), color="verde")}")
@@ -397,17 +394,7 @@ def estadisticas_por_zona() -> None:
                 log_error(f"La zona '{zona_buscada}' no existe en la base de datos.")
                 print(f"❌ No existen registros de la zona '{zona_buscada}'.")
         
-            # # Preguntar al usuario qué desea hacer a continuación
-            # opcion = ui.mostrar_submenu_consultas()
-
-            # if opcion == "2":
-            #     log_info("Usuario regresó al menú principal.")
-            #     break # Sale del bucle de consulta y vuelve al menú principal
-            # elif opcion != "1":
-            #     print(f"\n⚠️  {opcion} no es una opción válida.")
-            #     input("\nPresione Enter para intentarlo de nuevo...")
-
-                # Preguntar al usuario qué quiere hacer a continuación
+            # Preguntar al usuario qué quiere hacer a continuación
             while True: 
                 opcion = ui.mostrar_submenu_consultas()
             
@@ -473,9 +460,9 @@ if __name__ == "__main__":
     log_info("--- SESIÓN INICIADA: Sistema Atmos arrancado correctamente ---")
     
     try:
-        # ui.transicion_bienvenida()
-        # acceso_concedido = menu_acceso()
-        acceso_concedido = True
+        ui.transicion_bienvenida()
+        acceso_concedido = menu_acceso()
+    
         if acceso_concedido:
             iniciar_aplicacion()
         else:
