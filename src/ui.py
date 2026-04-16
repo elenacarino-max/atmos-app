@@ -1,10 +1,15 @@
 import time
 from datetime import date
 import sys
-import utils
 import validation as val
-
-def solicitar_fecha(msg_fecha):
+from typing import Callable, Optional
+from utils import (
+    formatear_texto, 
+    normalizar_entrada, 
+    imprimir_encabezado_h1, 
+    limpiar_pantalla 
+)
+def solicitar_fecha(msg_fecha: str) -> str:
     """
     Solicita una fecha al usuario por consola con opción de valor por defecto.
 
@@ -18,60 +23,91 @@ def solicitar_fecha(msg_fecha):
              devuelve la fecha actual.
     """
     while True:
-        try:
-            fecha = input(f"➤  {msg_fecha}").strip()
-            if fecha == "":
-                return str(date.today())
-            elif val.validar_fecha_registro(fecha):
-                return fecha
-            else:
-                print(f"   ❌ {formatear_texto('Error')}: {fecha} no es una fecha válida. Inténtalo de nuevo.")
-        except EOFError:
-            return None
+        fecha = input(f"➤  {msg_fecha}").strip()
+        if fecha == "":
+            return str(date.today())
+        elif val.validar_fecha_registro(fecha):
+            return fecha
+        else:
+            print(f"   ❌ {formatear_texto('Error')}:"
+                  f" {formatear_texto(fecha, estilo="normal")} no es una fecha válida.")
         
-def solicitar_zona(msg_zona):
-    
-    while True:
-        try:
-            zona = input(f"➤  {msg_zona}").strip().lower()
-            if val.validar_zona_registro(zona):
-                return zona
-            elif zona == "":
-                print(f"   ❌ {formatear_texto('Error')}: Este campo no puede estar vacio. Introduce una zona.")
-            else:
-                print(f"   ❌ {formatear_texto('Error')}: {zona} no es una zona válida. Inténtalo de nuevo.")
-        except EOFError:
-            return None
-        
-def solicitar_dato_numerico(msg_dato, f_validacion, medida="medida"):
-
-    while True:
-        try:    
-            dato = input(f"➤  {msg_dato}").strip().lower()
-            # Normalizar antes de validar: cambiar ',' por '.'
-            dato = utils.normalizar_entrada(dato)
-            
-            try:
-                dato = float(dato)
-                es_valido = f_validacion(dato)
-                if es_valido:
-                    return dato
-                else:
-                    print(f"   ❌ {formatear_texto('Error')}: {dato} no está dentro del rango permitido. Inténtalo de nuevo.")
-            except ValueError:
-                if dato == "":
-                    print(f"   ❌ {formatear_texto('Error')}: Este campo no puede estar vacío. Inténtalo de nuevo.")                        
-                else:
-                    print(f"   ❌ {formatear_texto('Error')}: {dato} no es una medición de {medida} permitida. Inténtalo de nuevo.")         
-        except EOFError:
-            return None
-        
-def solicitar_medicion():
+def solicitar_zona(msg_zona: str) -> str:
     """
-    Recoge una medición completa.
+    Solicita y valida el nombre de una zona geográfica por teclado.
+
+    Mantiene un bucle hasta que se introduce una zona que cumple con las reglas
+    definidas en el módulo de validación.
+
+    Args:
+        msg_zona (str): El mensaje o etiqueta que se mostrará al usuario.
 
     Returns:
-        dict: Diccionario con la medición o None si el usuario cancela la operación.
+        str: El nombre de la zona validado, en minúsculas y sin espacios extra.
+    """
+    while True:
+        zona = input(f"➤  {msg_zona}").strip().lower()
+        if val.validar_zona_registro(zona):
+            return zona
+        elif zona == "":
+            print(f"   ❌ {formatear_texto('Error')}: Este campo no puede"
+                  f" estar {formatear_texto('vacío', estilo="normal")}.")
+        else:
+            print(f"   ❌ {formatear_texto('Error')}: "
+                  f"{formatear_texto(zona, estilo="normal")} no es una zona válida.")
+        
+def solicitar_dato_numerico(msg_dato: str, 
+                            f_validacion: Callable[[float], bool], 
+                            medida: str = "medida") -> float:
+    """
+    Solicita, normaliza y valida una entrada numérica (temperatura, humedad, viento).
+
+    Convierte comas en puntos, transforma la entrada a float y aplica una 
+    función de validación externa para comprobar rangos.
+
+    Args:
+        msg_dato (str): El mensaje que se mostrará al usuario para pedir el dato.
+        f_validacion (Callable[[float], bool]): Una función que reciba un float 
+            y devuelva un booleano.
+        medida (str, opcional): El nombre de la magnitud.
+
+    Returns:
+        float: El valor numérico validado.
+    """
+    while True:  
+        dato = input(f"➤  {msg_dato}").strip().lower()
+        # Normalizar antes de validar: cambiar ',' por '.'
+        dato = normalizar_entrada(dato)
+        
+        try:
+            dato = float(dato)
+            es_valido = f_validacion(dato)
+            if es_valido:
+                return dato
+            else:
+                print(f"   ❌ {formatear_texto('Error')}: "
+                      f"{formatear_texto(dato, estilo="normal")} "
+                      f"no está dentro del rango permitido.")
+        except ValueError:
+            if dato == "":
+                print(f"   ❌ {formatear_texto('Error')}: Este campo no "
+                      f"puede estar {formatear_texto('vacío', estilo="normal")}.")                        
+            else:
+                print(f"   ❌ {formatear_texto('Error')}: "
+                      f"{formatear_texto(dato, estilo="normal")} no es una {medida} permitida.")         
+        
+def solicitar_medicion() -> Optional[dict]:
+    """
+    RCoordina la recogida de todos los datos necesarios para una medición meteorológica.
+
+    La función invoca secuencialmente las peticiones de fecha, zona y datos numéricos.
+    Si el usuario cancela mediante KeyboardInterrupt (Ctrl+C), la función captura
+    la excepción y regresa al menú principal de forma segura.ecoge una medición completa.
+
+    Returns:
+        Optional[dict]: Un diccionario con las claves 'fecha_registro', 'zona_registro', 
+                        'temperatura', 'humedad_nivel' y 'viento_velocidad'. 
+                        Devuelve None si el proceso es interrumpido o cancelado.
     """  
     try:
         # Solicitar datos
@@ -111,8 +147,9 @@ def solicitar_medicion():
         }  
 
     except KeyboardInterrupt:
-        print("\n\n⚠️  Operación cancelada por el usuario.")
-        print("\n ↩ Volviendo al menú principal.")
+        print(f"\n\n⚠️  {formatear_texto('Operación cancelada', 'amarillo')}")
+        print(" ↩ Volviendo al menú principal.")
+        time.sleep(2)
         return None
 
 def mostrar_menu_principal() -> str:
@@ -125,7 +162,7 @@ def mostrar_menu_principal() -> str:
     Returns:
         str: El carácter o número ingresado por el usuario.
     """
-    utils.imprimir_encabezado_h1("ATMOS: GESTIÓN METEOROLÓGICA URBANA")
+    imprimir_encabezado_h1("ATMOS: GESTIÓN METEOROLÓGICA URBANA")
     print(" [1] Registrar nueva medición")
     print(" [2] Consultar registro meteorológico por zona")
     print(" [3] Ver histórico")
@@ -207,7 +244,7 @@ def transicion_bienvenida() -> None:
         None
     """
     try:
-        utils.limpiar_pantalla()
+        limpiar_pantalla()
         imprimir_logo_atmos('bienvenida')
         print("\n" + " " * 20 + "Iniciando Atmos® ...")
         time.sleep(1.5)  
@@ -224,13 +261,13 @@ def transicion_despedida() -> None:
         None
     """
     try: 
-        utils.limpiar_pantalla()
+        limpiar_pantalla()
         imprimir_logo_atmos('despedida')
         efecto_maquina_escribir("\n" + " " * 22 + "Cerrando sesión ...")
         time.sleep(1)
         print(" " * 18 + "¡Gracias por usar Atmos®!")
         time.sleep(2)
-        utils.limpiar_pantalla()
+        limpiar_pantalla()
     except KeyboardInterrupt:
         return
     
@@ -336,9 +373,9 @@ def imprimir_logo_atmos(estado: str=None) -> None:
     logo_nombre = logo_nombre.strip('\n')
     
     if estado == 'bienvenida':
-        imprimir_linea_por_linea(utils.formatear_texto(logo_ascii, color="azul", estilo=""))
+        imprimir_linea_por_linea(formatear_texto(logo_ascii, color="azul", estilo=""))
     elif estado == 'despedida':
         logo_completo = logo_ascii +logo_nombre
-        imprimir_linea_por_linea(utils.formatear_texto(logo_completo, color="azul", estilo=""))
+        imprimir_linea_por_linea(formatear_texto(logo_completo, color="azul", estilo=""))
     else:
-        print(utils.formatear_texto(logo_ascii, color="azul", estilo=""))
+        print(formatear_texto(logo_ascii, color="azul", estilo=""))
