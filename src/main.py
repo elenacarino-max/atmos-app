@@ -25,7 +25,7 @@ def hacer_registro_usuario():
     print("\n--- REGISTRO DE USUARIO ---")
     usuario = input("Usuario: ")
     email = input("Email: ")
-    contrasena = input("Contraseña: ")
+    contrasena = input("Contraseña(8–15, incluye may., min., nº y símbolo): ")
 
     correcto, mensaje = registrar_usuario(usuario, email, contrasena)
     print(mensaje)
