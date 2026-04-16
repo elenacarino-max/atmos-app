@@ -1,12 +1,14 @@
 import sys
+from datetime import datetime
 import time
 import ui
 from utils import limpiar_pantalla, imprimir_encabezado_h2, formatear_texto, borrar_lineas
 from validation import validar_duplicado, validar_fecha_registro
 from alerts import evaluar_alerta
 import io_manager as io
-from logger import configurar_logger, log_info, log_warning, log_error, log_critico
 from auth import registrar_usuario, login
+from stats import mostrar_estadisticas, mostrar_grafico
+from logger import configurar_logger, log_info, log_warning, log_error, log_critico
 
 def mostrar_menu_inicio():
     """
@@ -200,6 +202,7 @@ def consultar_por_zona() -> None:
                 if opcion == "1":
                     break
                 elif opcion == "X":
+                    log_info("Usuario regresó al menú principal.")
                     return
                 
                 print(f"\n⚠️  '{opcion if opcion else ' '}' no es una opción válida.")
@@ -208,7 +211,8 @@ def consultar_por_zona() -> None:
 
         except KeyboardInterrupt:
             log_info("Consulta cancelada por el usuario.")
-            print("\n\n⚠️  Operación cancelada por el usuario.")
+            print("\n\n⚠️  Operación cancelada.")
+            time.sleep(1)
             return 
 
 def ver_historico():
@@ -332,7 +336,97 @@ def ver_historico():
         else:
             print("\nOpción no válida.")
 
+def estadisticas_por_zona() -> None:
+    """
+    Muestra estadísticas meteorológicas por zona.
+    
+    Procesa datos de temperatura, viento y humedad, genera gráficos
+    y maneja entrada del usuario en bucle hasta volver al menú principal.
+
+    Returns:
+        None
+    """
+    datos = io.cargar_datos()
+    
+    if not datos:
+        log_warning("Consulta de estadísticas fallida: Archivo de datos vacío o no encontrado.")
+        print("\n⚠️ No hay datos registrados para analizar.")
+        return
+    
+    while True:
+        try:
+            limpiar_pantalla()
+            imprimir_encabezado_h2("ESTADÍSTICAS")
+
+            zona_buscada = ui.solicitar_zona("Zona/Distrito a consultar: ")
+            datos_zona = [d for d in datos if d['zona_registro'].lower() == zona_buscada]
+            datos_zona.sort(key=lambda x: datetime.strptime(x['fecha_registro'], "%Y-%m-%d"))
             
+            if datos_zona:
+                log_info(f"Generando estadísticas para zona: {zona_buscada} ({len(datos_zona)} registros)")
+                
+                try:
+                    fechas = [datetime.strptime(d['fecha_registro'], "%Y-%m-%d") for d in datos_zona]
+                    temperaturas = [float(d.get('temperatura', 0)) for d in datos_zona]
+                    humedad = [float(d.get('humedad_nivel', 0)) for d in datos_zona]
+                    viento = [float(d.get('viento_velocidad', 0)) for d in datos_zona]
+                    print(fechas)
+                    print(viento)
+                    
+
+                    print(f"\n EVOLUCIÓN TÉRMICA - ZONA "
+                          f"{formatear_texto(zona_buscada.upper(), color="verde")}")
+                    
+                    # Temperatura
+                    mostrar_estadisticas("Temperatura", "°C", temperaturas)
+                    mostrar_grafico("Temperatura", "°C", fechas, temperaturas)
+
+                    # Humedad
+                    mostrar_estadisticas("Humedad", "%", humedad)
+                    mostrar_grafico("Humedad", "%", fechas, humedad)
+                    
+                    # Viento
+                    mostrar_estadisticas("Velocidad del viento", "km/h", viento)
+                    mostrar_grafico("Velocidad del viento", "km/h", fechas, viento)
+
+                except ValueError as ve:
+                    log_error(f"Error de conversión de tipos en zona {zona_buscada}: {ve}")
+                    print(f"❌ Error: Datos corruptos detectados en los registros de esta zona.")
+            
+            else:
+                log_error(f"La zona '{zona_buscada}' no existe en la base de datos.")
+                print(f"❌ No existen registros de la zona '{zona_buscada}'.")
+        
+            # # Preguntar al usuario qué desea hacer a continuación
+            # opcion = ui.mostrar_submenu_consultas()
+
+            # if opcion == "2":
+            #     log_info("Usuario regresó al menú principal.")
+            #     break # Sale del bucle de consulta y vuelve al menú principal
+            # elif opcion != "1":
+            #     print(f"\n⚠️  {opcion} no es una opción válida.")
+            #     input("\nPresione Enter para intentarlo de nuevo...")
+
+                # Preguntar al usuario qué quiere hacer a continuación
+            while True: 
+                opcion = ui.mostrar_submenu_consultas()
+            
+                if opcion == "1":
+                    break
+                elif opcion == "X":
+                    log_info("Usuario regresó al menú principal.")
+                    return
+                
+                print(f"\n⚠️  '{opcion if opcion else ' '}' no es una opción válida.")
+                time.sleep(1)
+                borrar_lineas(8)
+
+        except KeyboardInterrupt:
+            log_info("Consulta de estadísiticas cancelada por el usuario.")
+            time.sleep(1)
+            print("\n\n⚠️  Operación cancelada.")
+            return
+
 def iniciar_aplicacion() -> None:
     """
     Punto de entrada principal que mantiene el bucle de ejecución de la App.
@@ -358,6 +452,10 @@ def iniciar_aplicacion() -> None:
         elif opcion == "3":
             log_info("Navegando a: Histórico de registros")
             ver_historico()
+        
+        elif opcion == "4":
+            log_info("Navegando a: Estadísticas")
+            estadisticas_por_zona()
             
         elif opcion == "X":
             log_info("Cierre de aplicación solicitado por el usuario.")
@@ -375,9 +473,9 @@ if __name__ == "__main__":
     log_info("--- SESIÓN INICIADA: Sistema Atmos arrancado correctamente ---")
     
     try:
-        ui.transicion_bienvenida()
-        acceso_concedido = menu_acceso()
-        
+        # ui.transicion_bienvenida()
+        # acceso_concedido = menu_acceso()
+        acceso_concedido = True
         if acceso_concedido:
             iniciar_aplicacion()
         else:
