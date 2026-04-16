@@ -1,85 +1,79 @@
-import json
-import random
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import timedelta, datetime
-
-# --- 1. GENERACIÓN DE DATOS (Tu lógica vinculada y corregida) ---
-inicio = datetime(2000, 1, 1)
-fin = datetime.now()
-
-def fecha_aleatoria(inicio, fin):
-    delta = fin - inicio
-    dias = random.randint(0, delta.days)
-    fecha = inicio + timedelta(days=dias)
-    return fecha.strftime("%Y-%m-%d")
-
-datos = []
-combinaciones_usadas = set()
-
-print("Generando datos...")
-while len(datos) < 100:
-    fecha = fecha_aleatoria(inicio, fin)
-    zona = random.choice(["norte", "sur", "centro"])
-    clave = (fecha, zona) 
+from datetime import datetime
+import plotille
+from logger import log_info, log_error
+from typing import List, Dict
+ 
+def calcular_estadisticas(datos: List[float]) -> Dict[str, float]:
+    """
+    Calcula el mínimo, máximo y media de una serie numérica.
     
-    if clave not in combinaciones_usadas: 
-        combinaciones_usadas.add(clave)
-        registro = {
-            "fecha_registro": fecha,
-            "zona_registro": zona,
-            "temperatura": round(random.uniform(-15, 50), 2),
-            "humedad_nivel": round(random.uniform(0, 100), 2),
-            "viento_velocidad": round(random.uniform(0, 130), 2),
-            "alerta_temperatura": random.choice([True, False]),
-            "alerta_humedad": random.choice([True, False]),
-            "alerta_viento": random.choice([True, False])
-        }
-        datos.append(registro)
+    Args:
+        datos: Lista de valores.
+        
+    Returns:
+        Diccionario con las claves 'min', 'max' y 'media'.
+    """
+    if not datos:
+        return {}
 
-# Guardar en JSON
-with open('datos_aleatorios.json', 'w') as f:
-    json.dump(datos, f, indent=4)
+    return {
+        "min": float(min(datos)),
+        "max": float(max(datos)),
+        "media": sum(datos) / len(datos)
+    }
 
-# --- 2. VÍNCULO CON PANDAS Y ANÁLISIS ---
-# Leemos el archivo recién creado
-df = pd.read_json('datos_aleatorios.json')
-df['fecha_registro'] = pd.to_datetime(df['fecha_registro'])
+def mostrar_estadisticas(variable: str, unidad: str, datos: List[float]) -> None:
+    """
+    Muestra por consola un resumen estadístico de los datos.
 
-# Estadísticas básicas (Media por zona)
-print("\n--- ESTADÍSTICAS BÁSICAS (MEDIAS POR ZONA) ---")
-resumen = df.groupby('zona_registro')[['temperatura', 'humedad_nivel', 'viento_velocidad']].mean()
-print(resumen.round(2))
+    Args:
+        variable: Nombre de la medición (ej. "Temperatura", "Viento").
+        unidad: Unidad de medida (ej. "°C", "km/h").
+        datos: Lista de valores numéricos para el eje vertical.
+    """
+    stats = calcular_estadisticas(datos)
+    
+    print(f"\n {variable}: "
+          f"Mín.: {stats['min']:>3.1f} {unidad} | "
+          f"Media: {stats['media']:>3.1f} {unidad} | "
+          f"Máx.: {stats['max']:>3.1f} {unidad}")
 
-# --- 3. VISUALIZACIÓN (Sin avisos de error/FutureWarning) ---
-plt.figure(figsize=(14, 6))
+def mostrar_grafico(variable: str, unidad: str, fechas: List[datetime], datos: List[float]) -> None:
+    """
+    Renderiza un gráfico de dispersión/líneas en la terminal usando Plotille.
+    
+    Ajusta automáticamente el eje Y con precisión de un decimal y el eje X 
+    con formato mes-año, manteniendo una alineación vertical fija para 
+    comparativa entre múltiples gráficos.
 
-# Gráfica 1: Temperatura Media por Zona
-plt.subplot(1, 2, 1)
-sns.barplot(
-    data=df, 
-    x='zona_registro', 
-    y='temperatura', 
-    hue='zona_registro', # Asignamos hue para evitar el aviso
-    palette='coolwarm', 
-    estimator='mean',
-    legend=False        # Quitamos la leyenda porque el eje X ya lo explica
-)
-plt.title('Estadística: Temperatura Media por Zona')
-plt.grid(axis='y', linestyle='--', alpha=0.7)
+    Args:
+        variable: Nombre de la medición (ej. "Temperatura", "Viento").
+        unidad: Unidad de medida (ej. "°C", "km/h").
+        fechas: Lista de objetos datetime para el eje horizontal.
+        datos: Lista de valores numéricos para el eje vertical.
+    """
+    try:    
+        log_info(f"Generando gráfico de {variable} con {len(datos)} registros.")
 
-# Gráfica 2: Dispersión del Viento por Zona
-plt.subplot(1, 2, 2)
-sns.boxplot(
-    data=df, 
-    x='zona_registro', 
-    y='viento_velocidad', 
-    hue='zona_registro', # Asignamos hue para evitar el aviso
-    palette='viridis',
-    legend=False
-)
-plt.title('Distribución de Velocidad del Viento')
+        # Configuración de la figura de Plotille
+        fig = plotille.Figure()
+        fig.width = 70
+        fig.height = 8 
+        fig.x_label = 'mm-yyyy'
+        fig.y_label = unidad
 
-plt.tight_layout()
-plt.show()
+        # Eje X: Muestra Mes-Año
+        fig.register_label_formatter(datetime, lambda dt, *a, **k: dt.strftime("%m-%Y"))
+
+        # Eje Y: Fuerza 1 decimal y reserva 7 espacios para alineación 
+        fig.register_label_formatter(float, lambda v, *a, **k: f"{v:>7.1f}")
+
+        fig.plot(fechas, datos)
+        print(fig.show())
+
+        log_info(f"Gráfico de {variable} renderizado correctamente.")
+
+    except Exception as e:
+        log_error(f"Error crítico visualizando {variable}: {str(e)}")
+        print(f" Error de visualización: {e}")
+        
