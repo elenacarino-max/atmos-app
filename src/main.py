@@ -7,7 +7,7 @@ from validation import validar_duplicado, validar_fecha_registro
 from alerts import evaluar_alerta
 import io_manager as io
 from auth import registrar_usuario, login
-from stats import mostrar_estadisticas, mostrar_grafico
+from stats import mostrar_grafico_interactivo
 from logger import configurar_logger, log_info, log_warning, log_error, log_critico
 
 def mostrar_menu_inicio():
@@ -146,8 +146,8 @@ def ejecutar_registro() -> None:
                 return
         except KeyboardInterrupt:
             log_info("Operación cancelada por KeyboardInterrupt (Ctrl+C).")
+            print(f"\n\n⚠️  {formatear_texto('Operación cancelada', 'amarillo')}")
             return
-
 
 def consultar_por_zona() -> None:
     """
@@ -165,31 +165,34 @@ def consultar_por_zona() -> None:
             imprimir_encabezado_h2("CONSULTA DE REGISTROS POR ZONA")
             
             datos = io.cargar_datos()
-            zona_busqueda = ui.solicitar_zona("Zona/Distrito a consultar: ")
+            zona_busqueda = ui.solicitar_zona("Zona a consultar: ")
 
             log_info(f"Consulta realizada para la zona: {zona_busqueda}")
             
-            # Filtramos los datos
+            # Filtramos y ordenamos los datos
             resultados = [r for r in datos if r["zona_registro"].lower() == zona_busqueda.lower()]
+            resultados.sort(key=lambda r: datetime.strptime(r['fecha_registro'], "%Y-%m-%d"), reverse=True)
 
             if resultados:
                 num_resultados = len(resultados)
-                zona = formatear_texto(zona_busqueda.upper(), "verde")
+                zona = formatear_texto(zona_busqueda.upper(), "blanco")
+                num = formatear_texto(num_resultados, "blanco") 
                 if num_resultados == 1:
-                    print(f"\n🔍 Se ha encontrado 1 registro en la zona {zona}:")
+                    print(f"\n🔍 Se ha encontrado {num} registro en la zona {zona}:")
                 else:
-                    print(f"\n🔍 Se han encontrado {num_resultados} registros en la zona {zona}:")
+                    print(f"\n🔍 Se han encontrado {num} registros en la zona {zona}:")
                 
                 log_info(f"Resultados encontrados para {zona_busqueda}: {num_resultados}")
                 
                 print("-" * 50)
                 for r in resultados:
-                    print(f"📅 {r['fecha_registro']} | 🌡️  {r['temperatura']}°C | 💧 {r['humedad_nivel']}% | 💨 {r['viento_velocidad']} km/h")
+                    fecha = formatear_texto(r['fecha_registro'], color="blanco")
+                    print(f"📅 {fecha} | 🌡️  {r['temperatura']}°C | 💧 {r['humedad_nivel']}% | 💨 {r['viento_velocidad']} km/h")
                     if r.get("mensajes"):
                         print(f"   ⚠️ {formatear_texto('Alertas')}:")
                         for alerta in r["mensajes"]:
                             print(f"        - {alerta}")
-                        print()
+                    print('.' * 50)
      
             else:
                 zona_error = formatear_texto(zona_busqueda.upper())
@@ -211,8 +214,9 @@ def consultar_por_zona() -> None:
 
         except KeyboardInterrupt:
             log_info("Consulta cancelada por el usuario.")
-            print("\n\n⚠️  Operación cancelada.")
-            time.sleep(1)
+            print(f"\n\n⚠️  {formatear_texto('Operación cancelada', 'amarillo')}: "
+                   "Volviendo al menú principal.")
+            time.sleep(2)
             return 
 
 def ver_historico():
@@ -302,13 +306,15 @@ def ver_historico():
             print("-"*50)
 
             for r in bloque:
-                print(f"📅 {r['fecha_registro']} | 🌡️  {r['temperatura']}°C | 💧 {r['humedad_nivel']}% | 💨 {r['viento_velocidad']} km/h\n")
+                fecha = formatear_texto(r['fecha_registro'], color="blanco")
+                print(f"📅 {fecha} | 🌡️  {r['temperatura']}°C | 💧 {r['humedad_nivel']}% | 💨 {r['viento_velocidad']} km/h\n")
                 if r.get("mensajes"):
-                            print(f"⚠️ {formatear_texto('Alertas')}:")
-                            for alerta in r["mensajes"]:
-                                print(f"      - {alerta}")
+                    print(f"   ⚠️ {formatear_texto('Alertas')}:")
+                    for alerta in r["mensajes"]:
+                        print(f"      - {alerta}")
                 else:
                     print("Sin Alertas.\n")
+                print('.' * 50)
 
         cambio_pagina = False
 
@@ -338,7 +344,7 @@ def ver_historico():
 
 def estadisticas_por_zona() -> None:
     """
-    Muestra estadísticas meteorológicas por zona.
+    Muestra gráficos meteorológicos por zona.
     
     Procesa datos de temperatura, viento y humedad, genera gráficos
     y maneja entrada del usuario en bucle hasta volver al menú principal.
@@ -356,36 +362,34 @@ def estadisticas_por_zona() -> None:
     while True:
         try:
             limpiar_pantalla()
-            imprimir_encabezado_h2("ESTADÍSTICAS")
+            imprimir_encabezado_h2("GRÁFICOS")
 
-            zona_buscada = ui.solicitar_zona("Zona/Distrito a consultar: ")
+            zona_buscada = ui.solicitar_zona("Zona a consultar: ")
             datos_zona = [d for d in datos if d['zona_registro'].lower() == zona_buscada]
-            datos_zona.sort(key=lambda x: datetime.strptime(x['fecha_registro'], "%Y-%m-%d"))
+            datos_zona.sort(key=lambda d: datetime.strptime(d['fecha_registro'], "%Y-%m-%d"))
             
             if datos_zona:
                 log_info(f"Generando estadísticas para zona: {zona_buscada} ({len(datos_zona)} registros)")
                 
                 try:
                     fechas = [datetime.strptime(d['fecha_registro'], "%Y-%m-%d") for d in datos_zona]
-                    temperaturas = [float(d.get('temperatura', 0)) for d in datos_zona]
-                    humedad = [float(d.get('humedad_nivel', 0)) for d in datos_zona]
-                    viento = [float(d.get('viento_velocidad', 0)) for d in datos_zona]                  
+                    datos_grafico = {
+                                'temperatura': {
+                                    'datos': [d['temperatura'] for d in datos_zona],
+                                    'alertas': [d.get('alerta_temperatura', False) for d in datos_zona]
+                                },
+                                'humedad': {
+                                    'datos': [d['humedad_nivel'] for d in datos_zona],
+                                    'alertas': [d.get('alerta_humedad', False) for d in datos_zona]
+                                },
+                                'viento': {
+                                    'datos': [d['viento_velocidad'] for d in datos_zona],
+                                    'alertas': [d.get('alerta_viento', False) for d in datos_zona]
+                                }
+                    }
 
-                    print(f"\n EVOLUCIÓN TÉRMICA - ZONA "
-                          f"{formatear_texto(zona_buscada.upper(), color="verde")}")
-                    
-                    # Temperatura
-                    mostrar_estadisticas("Temperatura", "°C", temperaturas)
-                    mostrar_grafico("Temperatura", "°C", fechas, temperaturas)
-
-                    # Humedad
-                    mostrar_estadisticas("Humedad", "%", humedad)
-                    mostrar_grafico("Humedad", "%", fechas, humedad)
-                    
-                    # Viento
-                    mostrar_estadisticas("Velocidad del viento", "km/h", viento)
-                    mostrar_grafico("Velocidad del viento", "km/h", fechas, viento)
-
+                    mostrar_grafico_interactivo(fechas, datos_grafico, zona_buscada.upper())
+            
                 except ValueError as ve:
                     log_error(f"Error de conversión de tipos en zona {zona_buscada}: {ve}")
                     print(f"❌ {formatear_texto('Error')}: Datos corruptos detectados en "
@@ -411,8 +415,9 @@ def estadisticas_por_zona() -> None:
 
         except KeyboardInterrupt:
             log_info("Consulta de estadísiticas cancelada por el usuario.")
-            time.sleep(1)
-            print("\n\n⚠️  Operación cancelada.")
+            print(f"\n\n⚠️  {formatear_texto('Operación cancelada', 'amarillo')}: "
+                   "Volviendo al menú principal.")
+            time.sleep(2)
             return
 
 def iniciar_aplicacion() -> None:
@@ -463,7 +468,7 @@ if __name__ == "__main__":
     try:
         ui.transicion_bienvenida()
         acceso_concedido = menu_acceso()
-    
+
         if acceso_concedido:
             iniciar_aplicacion()
         else:
