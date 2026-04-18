@@ -148,17 +148,17 @@ def solicitar_medicion() -> Optional[dict]:
         }  
 
     except KeyboardInterrupt:
-        print(f"\n\n⚠️  {formatear_texto('Operación cancelada', 'amarillo')}")
-        print(" ↩ Volviendo al menú principal.")
+        print(f"\n\n⚠️  {formatear_texto('Operación cancelada', 'amarillo')}: "
+               "Volviendo al menú principal.")
         time.sleep(2)
-        return None
+        return
 
 def mostrar_menu_principal() -> str:
     """
     Muestra la interfaz principal del sistema ATMOS y captura la elección del usuario.
 
     La función imprime el título principal y las opciones disponibles (registro, 
-    consulta y estadísticas), devolviendo la opción limpia de espacios.
+    consulta y gráficos), devolviendo la opción limpia de espacios.
 
     Returns:
         str: El carácter o número ingresado por el usuario.
@@ -167,7 +167,7 @@ def mostrar_menu_principal() -> str:
     print(" [1] Registrar nueva medición")
     print(" [2] Consultar registro meteorológico por zona")
     print(" [3] Ver histórico")
-    print(" [4] Ver estadísticas")
+    print(" [4] Ver gráficos")
     print(" [X] Salir")
     print("-" * 50)
     return input("Selecciona una opción: ").strip()
@@ -366,10 +366,7 @@ def imprimir_logo_atmos(estado: str=None) -> None:
                        ++++          ++++   +++++  +   +++       +++       +++    ++++++  +++++   ++++    ++++                    
                       ++++            ++++    ++++++   +++       +++       +++      +++++++++      ++++++++++                                                                             
     """
-
-    color_azul = "\033[34m"
-    reset = "\033[0m"
-
+    
     logo_ascii = logo_ascii.strip('\n')
     logo_nombre = logo_nombre.strip('\n')
     
