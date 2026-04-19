@@ -46,14 +46,14 @@ def ejecutar_programa_principal():
     Llama a la parte principal de Atmos-App:
     captura datos y los guarda en data/data.json.
     """
-    print("\n✅ Acceso concedido. Entrando en Atmos-App...")
+    print("\n Acceso concedido. Entrando en Atmos-App...")
 
     # 1. Capturamos un nuevo registro desde ui.py
     nuevo_registro = capturar_datos_estacion()
 
     # Si por cualquier motivo no devuelve datos válidos, paramos
     if not nuevo_registro:
-        print("❌ No se pudo crear el registro.")
+        print(" No se pudo crear el registro.")
         return
 
     # 2. Cargamos el histórico actual
@@ -63,9 +63,9 @@ def ejecutar_programa_principal():
     guardado = guardar_registro(nuevo_registro, datos)
 
     if guardado:
-        print("\n✅ Registro guardado correctamente en data/data.json")
+        print("\n Registro guardado correctamente en data/data.json")
     else:
-        print("\n❌ Error al guardar el registro.")
+        print("\n Error al guardar el registro.")
 
 
 def main():
@@ -90,7 +90,7 @@ def main():
             break
 
         else:
-            print("❌ Opción no válida.")
+            print(" Opción no válida.")
 
 
 if __name__ == "__main__":

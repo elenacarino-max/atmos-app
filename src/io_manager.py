@@ -1,7 +1,7 @@
 import os
 import json
 from typing import List, Dict, Any
-from logger import log_info, log_error, log_warning
+from logger import log_info, log_error
 
 # Ruta al archivo json
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,7 +34,7 @@ def cargar_datos() -> List[Dict[str, Any]]:
             datos = json.load(f)
             log_info(f"Carga exitosa. Se han recuperado {len(datos)} registros.")
             return datos
-    except (json.JSONDecodeError, FileNotFoundError):
+    except (json.JSONDecodeError, FileNotFoundError) as e:
         # Manejo de error si el archivo está dañado o no existe
         log_error(f"Error al leer el archivo JSON (posible archivo corrupto): {e}")
         return []
@@ -67,7 +67,7 @@ def guardar_registro(nuevo_registro: Dict[str, Any], datos: List[Dict[str, Any]]
             json.dump(datos, f, indent=4, ensure_ascii=False)
             log_info(f"Registro guardado correctamente para la zona '{nuevo_registro.get('zona_registro')}'")
         return True
-    except Exception:
+    except Exception as e:
         # Gestión de errores de escritura
         log_error(f"Fallo crítico al intentar persistir los datos: {e}")
         return False

@@ -27,7 +27,7 @@ Sigue estos pasos para preparar el entorno de Atmos-App en tu máquina local:
     pip install -r requirements.txt
     ```
 
-4. ~~**Verificar la instalación**. Ejecuta la batería de tests inicial para confirmar que todo está en orden:~~
+4. **Verificar la instalación**. Ejecuta la batería de tests inicial para confirmar que todo está en orden:
 
     ```bash
     pytest
@@ -37,7 +37,7 @@ Sigue estos pasos para preparar el entorno de Atmos-App en tu máquina local:
 
 1. **Fork** del proyecto.
 2. Crea una rama: `git checkout -b feat/nombre-de-tu-mejora`.
-3. Realiza tus cambios ~~y asegúrate de que `pytest` no dé errores~~.
+3. Realiza tus cambios y asegúrate de que `pytest` no dé errores.
 4. Abre un **Pull Request** detallando qué problema resuelves.
 
 #### 3. Convenciones de mensajes de commit
@@ -96,5 +96,3 @@ Para mantener un historial de cambios limpio y legible, vamos a utilizar la conv
     ```python
     def registrar(dato: dict) -> bool:
     ```
-
-- ~~**Logs**: Cada nueva funcionalidad debe emitir un log informativo o de error usando `src/logger.py`.~~
